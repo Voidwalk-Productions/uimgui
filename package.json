@@ -1,0 +1,11 @@
+{
+	"name": "com.voidwalkproductions.uimgui",
+	"displayName": "UImGui",
+	"version": "0.0.1",
+	"unity": "6000.0",
+	"description": "An ImGui library built on top of Unity's ImGui for common UI elements",
+	"keywords": [
+		"imgui"
+	],
+	"category": "Unity"
+}
