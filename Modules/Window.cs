@@ -11,85 +11,43 @@ namespace UImGui
 		public string name;
 		public CallBack onPressed;
 	}
-	
-	public static class GUIUtils
-	{
-		public static Texture2D CreateBackgroundTexture(Color color)
-		{
-			Texture2D texture = new(1, 1);
-			texture.SetPixel(0, 0, color);
-			texture.Apply();
-			return texture;
-		}
-	}
-
-	public static class ImGuiStyles
-	{
-		public static readonly GUIStyle WindowPanel = new()
-		{
-			alignment = TextAnchor.MiddleLeft,
-			normal = { background = GUIUtils.CreateBackgroundTexture(new Color(0.0f, 0.0f, 0.0f, 0.6f)), textColor = Color.white },
-			fontSize = 20,
-			padding = new(5, 5, 5, 5)
-		};
-
-		public static readonly GUIStyle Header = new()
-		{
-			alignment = TextAnchor.MiddleLeft,
-			normal = { background = GUIUtils.CreateBackgroundTexture(new Color(0.16f, 0.29f, 0.48f, 1f)), textColor = Color.white },
-			fontSize = 18,
-			padding = new(2, 2, 2, 2)
-		};
-
-		public static readonly GUIStyle MenuBar = new()
-		{
-			alignment = TextAnchor.MiddleLeft,
-			normal = { background = GUIUtils.CreateBackgroundTexture(new Color(0.14f, 0.14f, 0.14f, 1f)), textColor = Color.white },
-			fontSize = 20,
-			padding = new(2, 2, 2, 2)
-		};
-
-		public static readonly GUIStyle Button = new()
-		{
-			alignment = TextAnchor.MiddleCenter,
-			stretchHeight = true,
-			normal = { background = GUIUtils.CreateBackgroundTexture(new Color(0.14f, 0.14f, 0.14f, 1f)), textColor = Color.white },
-			hover = { background = GUIUtils.CreateBackgroundTexture(new Color(0.24f, 0.5f, 0.81f, 1f)), textColor = Color.white },
-			fontSize = 12,
-			padding = new(10, 10, 0, 0)
-		};
-	}
 
 	[Flags]
 	public enum WindowFlags
 	{
 		None = 0,
 		Titlebar = 1,
-		Menubar = 2,
+		Toolbar = 2,
 	}
 
 	public class Window : IWindow
 	{
 		public bool IsOpen { get; set; }
 
-		private readonly string _windowName			= string.Empty;
-		private readonly WindowFlags _windowFlags	= WindowFlags.None;
-		private readonly List<MenuItem> _menuItems	= new();
+		private readonly string _windowName				= string.Empty;
+		private readonly WindowFlags _windowFlags		= WindowFlags.None;
+		private readonly List<MenuItem> _menuItems		= new();
+		private readonly ImGuiStyleAsset _styleAsset	= null;
 
-		private Rect _windowRect					= new(20.0f, 20.0f, 256.0f, 256.0f);
-		private Vector2 _windowDragOffset			= Vector2.zero;
-		private bool _isDragging					= false;
+		private Rect _windowRect						= new(20.0f, 20.0f, 256.0f, 256.0f);
+		private Rect _windowFoldedRect					= new(20.0f, 20.0f, 256.0f, 28.0f);
+		private Rect _titlebarRect						= new(0.0f, 0.0f, 256.0f, 28.0f);
 
-		Window(string name, in Rect windowRect, WindowFlags flags)
+		private Vector2 _windowDragOffset				= Vector2.zero;
+		private bool _isDragging						= false;
+		private bool _isFolded							= false;
+
+		Window(string name, in Rect windowRect, WindowFlags flags, in ImGuiStyleAsset styleAsset)
 		{
 			_windowName = name;
 			_windowRect = windowRect;
 			_windowFlags = flags;
+			_styleAsset = styleAsset;
 		}
 
-		public static Window Create(string name, in Rect windowRect, WindowFlags flags)
+		public static Window Create(string name, in Rect windowRect, WindowFlags flags, in ImGuiStyleAsset styleAsset)
 		{ 
-			return new Window(name, windowRect, flags);
+			return new Window(name, windowRect, flags, styleAsset);
 		}
 
 		public Window AddMenu(params MenuItem[] menuItems)
@@ -105,47 +63,16 @@ namespace UImGui
 				return;
 			}
 
-			GUILayout.BeginArea(_windowRect, ImGuiStyles.WindowPanel);
+			GUILayout.BeginArea(_isFolded ? _windowFoldedRect : _windowRect, ImGuiStyles.WindowPanel);
 			{
 				HandleWindowDragEvent();
 
-				if (_windowFlags.HasFlag(WindowFlags.Titlebar))
+				DrawTitlebar();
+
+				if (!_isFolded)
 				{
-					GUILayout.BeginArea(new Rect(0.0f, 0.0f, 256.0f, 28.0f), ImGuiStyles.Header);
-					{
-						GUILayout.BeginHorizontal();
-						{
-							if (GUILayout.Button("#", GUILayout.Width(24), GUILayout.Height(24)))
-							{
-								// Toggle panel fold
-							}
-
-							GUILayout.Label(_windowName, ImGuiStyles.Header);
-
-							if (GUILayout.Button("#", GUILayout.Width(24), GUILayout.Height(24)))
-							{
-								IsOpen = false;
-							}
-						}
-
-						GUILayout.EndHorizontal();
-					}
-					GUILayout.EndArea();
-				}
-
-				if (_windowFlags.HasFlag(WindowFlags.Menubar))
-				{
-					GUILayout.BeginArea(new Rect(0.0f, 28.0f, 256.0f, 28.0f), ImGuiStyles.MenuBar);
-					GUILayout.BeginHorizontal();
-					foreach (var item in _menuItems)
-					{
-						if (GUILayout.Button(item.name, ImGuiStyles.Button, GUILayout.ExpandWidth(false)))
-						{
-							item.onPressed?.Invoke();
-						}
-					}
-					GUILayout.EndHorizontal();
-					GUILayout.EndArea();
+					DrawToolbar();
+					// Draw user elements here
 				}
 			}
 			GUILayout.EndArea();
@@ -166,12 +93,59 @@ namespace UImGui
 			{
 				if (e.type == EventType.MouseDrag)
 				{
-					_windowRect.position = mouseScreenPos - _windowDragOffset;
+					Vector2 newRectPos = mouseScreenPos - _windowDragOffset;
+					_windowRect.position = newRectPos;
+					_windowFoldedRect.position = newRectPos;
 				}
 				else if (e.type == EventType.MouseUp)
 				{
 					_isDragging = false;
 				}
+			}
+		}
+
+		private void DrawTitlebar()
+		{
+			if (_windowFlags.HasFlag(WindowFlags.Titlebar))
+			{
+				GUILayout.BeginArea(_titlebarRect, ImGuiStyles.Header);
+				{
+					GUILayout.BeginHorizontal();
+					{
+						if (GUILayout.Button(_isFolded ? _styleAsset.rightArrowhead : _styleAsset.downArrowhead, ImGuiStyles.TitleButton, GUILayout.Width(24), GUILayout.Height(24)))
+						{
+							_isFolded = !_isFolded;
+						}
+
+						GUILayout.Label(_windowName, ImGuiStyles.Header);
+
+						if (GUILayout.Button(_styleAsset.close, ImGuiStyles.TitleButton, GUILayout.Width(24), GUILayout.Height(24)))
+						{
+							IsOpen = false;
+						}
+					}
+
+					GUILayout.EndHorizontal();
+				}
+				GUILayout.EndArea();
+			}
+		}
+
+		private void DrawToolbar()
+		{
+			if (_windowFlags.HasFlag(WindowFlags.Toolbar))
+			{
+				GUILayout.BeginArea(new Rect(0.0f, 28.0f, 256.0f, 28.0f), ImGuiStyles.MenuBar);
+				GUILayout.BeginHorizontal();
+				foreach (var item in _menuItems)
+				{
+					if (GUILayout.Button(item.name, ImGuiStyles.Button, GUILayout.ExpandWidth(false)))
+					{
+						item.onPressed?.Invoke();
+					}
+				}
+				GUILayout.EndHorizontal();
+				GUILayout.EndArea();
 			}
 		}
 	}
