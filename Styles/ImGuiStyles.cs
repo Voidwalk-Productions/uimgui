@@ -47,5 +47,11 @@ namespace UImGui
 			hover = { background = GUIUtils.CreateBackgroundTexture(new Color(0.24f, 0.5f, 0.81f, 1f)) },
 			padding = new(6, 6, 6, 6)
 		};
+
+		public static readonly GUIStyle ResizeButton = new()
+		{
+			normal = { background = GUIUtils.CreateBackgroundTexture(new Color(0.24f, 0.5f, 0.81f, 0.1f)) },
+			hover = { background = GUIUtils.CreateBackgroundTexture(new Color(0.24f, 0.5f, 0.81f, 0.8f)) },
+		};
 	}
 }

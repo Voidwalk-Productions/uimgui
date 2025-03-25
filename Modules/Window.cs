@@ -1,5 +1,7 @@
+using Sirenix.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace UImGui
@@ -28,13 +30,19 @@ namespace UImGui
 		private readonly WindowFlags _windowFlags		= WindowFlags.None;
 		private readonly List<MenuItem> _menuItems		= new();
 		private readonly ImGuiStyleAsset _styleAsset	= null;
+		private readonly float _resizeBtnSize			= 18.0f;
 
 		private Rect _windowRect						= new(20.0f, 20.0f, 256.0f, 256.0f);
 		private Rect _windowFoldedRect					= new(20.0f, 20.0f, 256.0f, 28.0f);
 		private Rect _titlebarRect						= new(0.0f, 0.0f, 256.0f, 28.0f);
+		private Rect _toolbarRect						= new(0.0f, 28.0f, 256.0f, 28.0f);
 
 		private Vector2 _windowDragOffset				= Vector2.zero;
+		private Vector2 _windowResizeOffset				= Vector2.zero;
+
+
 		private bool _isDragging						= false;
+		private bool _isResizing						= false;
 		private bool _isFolded							= false;
 
 		Window(string name, in Rect windowRect, WindowFlags flags, in ImGuiStyleAsset styleAsset)
@@ -65,6 +73,7 @@ namespace UImGui
 
 			GUILayout.BeginArea(_isFolded ? _windowFoldedRect : _windowRect, ImGuiStyles.WindowPanel);
 			{
+				HandleWindowResizeEvent();
 				HandleWindowDragEvent();
 
 				DrawTitlebar();
@@ -78,11 +87,51 @@ namespace UImGui
 			GUILayout.EndArea();
 		}
 
-		private void HandleWindowDragEvent()
+		private void HandleWindowResizeEvent()
 		{
 			Event e = Event.current;
-
 			Vector2 mouseScreenPos = GUIUtility.GUIToScreenPoint(e.mousePosition);
+
+			Rect resizeButtonRect = new (_windowRect.width - _resizeBtnSize, _windowRect.height - _resizeBtnSize, _resizeBtnSize, _resizeBtnSize);
+
+			GUI.Box(resizeButtonRect, "", ImGuiStyles.ResizeButton);
+
+			if (resizeButtonRect.Contains(e.mousePosition))
+			{
+				if (e.type == EventType.MouseDown && e.button == 0)
+				{
+					_isResizing = true;
+					_windowResizeOffset = mouseScreenPos - _windowRect.max;
+				}
+				else if (e.type == EventType.MouseUp && e.button == 0)
+				{
+					_isResizing = false;
+				}
+			}
+
+			if (_isResizing)
+			{
+				Vector2 newRectMax = mouseScreenPos - _windowResizeOffset;
+
+				newRectMax.x = MathF.Max(newRectMax.x, _windowRect.min.y + _resizeBtnSize);
+				newRectMax.y = Mathf.Max(newRectMax.y, _windowRect.min.y + _toolbarRect.max.y);
+
+				_windowRect.max = newRectMax;
+				_titlebarRect.xMax = _windowRect.width;
+				_toolbarRect.xMax = _windowRect.width;
+			}
+		}
+
+		private void HandleWindowDragEvent()
+		{
+			if (_isResizing)
+			{
+				return;
+			}
+
+			Event e = Event.current;
+			Vector2 mouseScreenPos = GUIUtility.GUIToScreenPoint(e.mousePosition);
+
 			if (_windowRect.Contains(mouseScreenPos) && e.type == EventType.MouseDown && e.button == 0)
 			{
 				_isDragging = true;
@@ -135,7 +184,7 @@ namespace UImGui
 		{
 			if (_windowFlags.HasFlag(WindowFlags.Toolbar))
 			{
-				GUILayout.BeginArea(new Rect(0.0f, 28.0f, 256.0f, 28.0f), ImGuiStyles.MenuBar);
+				GUILayout.BeginArea(_toolbarRect, ImGuiStyles.MenuBar);
 				GUILayout.BeginHorizontal();
 				foreach (var item in _menuItems)
 				{
