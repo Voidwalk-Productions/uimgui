@@ -15,3 +15,16 @@ MonoBehaviour:
   rightArrowhead: {fileID: 2800000, guid: f8e4bf26a78f9d84b8206fec4a1d43d3, type: 3}
   downArrowhead: {fileID: 2800000, guid: d949c1054d4291142ba27ae813c777a7, type: 3}
   close: {fileID: 2800000, guid: 38356f4c5f778c34b8330cc06f61636b, type: 3}
+  skin: {fileID: 11400000, guid: 3684153415c3d274ea3093e59957f103, type: 2}
+  defaultRectPos:
+    serializedVersion: 2
+    x: 11.65
+    y: 3.81
+    width: 237.2
+    height: 140.4
+  rectPos:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 200
+    height: 214
