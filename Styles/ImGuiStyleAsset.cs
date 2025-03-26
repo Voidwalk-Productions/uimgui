@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace UImGui
 {
@@ -9,5 +8,9 @@ namespace UImGui
         public Texture2D rightArrowhead;
         public Texture2D downArrowhead;
         public Texture2D close;
-    }
+        public GUISkin skin;
+
+        public Rect defaultRectPos = new Rect(0, 0, 200, 200);
+        public Rect rectPos = new Rect(0, 0, 200, 200);
+	}
 }

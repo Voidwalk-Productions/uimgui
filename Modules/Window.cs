@@ -1,17 +1,17 @@
 using Sirenix.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 
 namespace UImGui
 {
-	public delegate void CallBack();
+	public delegate void MenuItemSelectedCallback();
+	public delegate void LayoutOnDrawCallback();
 
 	public struct MenuItem
 	{
 		public string name;
-		public CallBack onPressed;
+		public MenuItemSelectedCallback onPressed;
 	}
 
 	[Flags]
@@ -30,6 +30,7 @@ namespace UImGui
 		private readonly WindowFlags _windowFlags		= WindowFlags.None;
 		private readonly List<MenuItem> _menuItems		= new();
 		private readonly ImGuiStyleAsset _styleAsset	= null;
+		private readonly float _titleBtnSize			= 24.0f;
 		private readonly float _resizeBtnSize			= 18.0f;
 
 		private Rect _windowRect						= new(20.0f, 20.0f, 256.0f, 256.0f);
@@ -40,10 +41,11 @@ namespace UImGui
 		private Vector2 _windowDragOffset				= Vector2.zero;
 		private Vector2 _windowResizeOffset				= Vector2.zero;
 
-
 		private bool _isDragging						= false;
 		private bool _isResizing						= false;
 		private bool _isFolded							= false;
+
+		private List<LayoutOnDrawCallback> _layoutOnDrawCallbacks = new();
 
 		Window(string name, in Rect windowRect, WindowFlags flags, in ImGuiStyleAsset styleAsset)
 		{
@@ -64,8 +66,18 @@ namespace UImGui
 			return this;
 		}
 
+		public Window AddLayout(params LayoutOnDrawCallback[] layoutCallbacks)
+		{
+			_layoutOnDrawCallbacks.AddRange(layoutCallbacks);
+			return this;
+		}
+
+		private Vector2 scrollViewPosition = Vector2.zero;
+
 		public void OnGui()
 		{
+			GUI.skin = _styleAsset.skin;
+
 			if (!IsOpen)
 			{
 				return;
@@ -73,16 +85,35 @@ namespace UImGui
 
 			GUILayout.BeginArea(_isFolded ? _windowFoldedRect : _windowRect, ImGuiStyles.WindowPanel);
 			{
-				HandleWindowResizeEvent();
-				HandleWindowDragEvent();
-
 				DrawTitlebar();
 
 				if (!_isFolded)
 				{
 					DrawToolbar();
-					// Draw user elements here
+
+					const float spacing = 2.0f;
+					Rect rect = new(
+						_toolbarRect.xMin + spacing, 
+						_toolbarRect.yMax + spacing, 
+						_windowRect.width - spacing, 
+						_windowRect.height - (_titlebarRect.height + _toolbarRect.height + _resizeBtnSize)
+					);
+					GUILayout.BeginArea(rect);
+
+					scrollViewPosition = GUILayout.BeginScrollView(scrollViewPosition, GUILayout.Width(rect.width), GUILayout.Height(rect.height - _resizeBtnSize));
+
+					foreach (var callback in _layoutOnDrawCallbacks)
+					{
+						callback?.Invoke();
+					}
+
+					GUILayout.EndScrollView();
+
+					GUILayout.EndArea();
 				}
+
+				HandleWindowResizeEvent();
+				HandleWindowDragEvent();
 			}
 			GUILayout.EndArea();
 		}
@@ -168,7 +199,7 @@ namespace UImGui
 
 						GUILayout.Label(_windowName, ImGuiStyles.Header);
 
-						if (GUILayout.Button(_styleAsset.close, ImGuiStyles.TitleButton, GUILayout.Width(24), GUILayout.Height(24)))
+						if (GUILayout.Button(_styleAsset.close, ImGuiStyles.TitleButton, GUILayout.Width(_titleBtnSize), GUILayout.Height(_titleBtnSize)))
 						{
 							IsOpen = false;
 						}
