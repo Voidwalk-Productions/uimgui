@@ -10,25 +10,15 @@ namespace UImGui
     {
         private static Dictionary<string, string> _tempFieldStates = new();
 
-        public static T ConvertToGeneric<T>(object obj) where T : class
-        {
-            return obj as T;
-        }
-
         public static T Field<T>(string fieldId, T value)
         {
-            T result = value;
-
-            GUILayout.BeginHorizontal();
+            using (new GUILayout.HorizontalScope())
             {
                 GUILayout.Label(fieldId);
 
                 object val = GetFieldDrawer<T>()?.Invoke(fieldId, value);
-                result = val != null ? (T)val : value;
+                return val != null ? (T)val : value;
             }
-            GUILayout.EndHorizontal();
-
-            return result;
         }
 
         private static FieldFunc GetFieldDrawer<T>()
@@ -39,9 +29,9 @@ namespace UImGui
 			{
 				return DrawField_Boolean;
 			}
-            else if (fieldType.IsPrimitive)
+            else if (fieldType.IsPrimitive || fieldType == typeof(string))
             {
-                return DrawField_Numeric<T>;
+				return DrawField_Generic<T>;
             }
             else
             {
@@ -54,9 +44,9 @@ namespace UImGui
             return GUILayout.Toggle(Convert.ToBoolean(value), "");
         }
 
-        private static object DrawField_Numeric<T>(string fieldID, object value)
+        private static object DrawField_Generic<T>(string fieldID, object value)
         {
-			string parsedVal = value.ToString();
+			string parsedVal = value?.ToString() ?? "";
             _tempFieldStates.TryAdd(fieldID, parsedVal);
 
             GUI.SetNextControlName(fieldID);
