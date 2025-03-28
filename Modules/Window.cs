@@ -35,7 +35,7 @@ namespace UImGui
 
 		private Rect _windowRect						= new(20.0f, 20.0f, 256.0f, 256.0f);
 		private Rect _windowFoldedRect					= new(20.0f, 20.0f, 256.0f, 28.0f);
-		private Rect _titlebarRect						= new(0.0f, 0.0f, 256.0f, 28.0f);
+		private Rect _headerBar							= new(0.0f, 0.0f, 256.0f, 28.0f);
 		private Rect _toolbarRect						= new(0.0f, 28.0f, 256.0f, 28.0f);
 
 		private Vector2 _windowDragOffset				= Vector2.zero;
@@ -53,6 +53,9 @@ namespace UImGui
 			_windowRect = windowRect;
 			_windowFlags = flags;
 			_styleAsset = styleAsset;
+
+			_headerBar.width = _windowRect.width;
+			_toolbarRect.width = _windowRect.width;
 		}
 
 		public static Window Create(string name, in Rect windowRect, WindowFlags flags, in ImGuiStyleAsset styleAsset)
@@ -96,7 +99,7 @@ namespace UImGui
 						_toolbarRect.xMin + spacing, 
 						_toolbarRect.yMax + spacing, 
 						_windowRect.width - spacing, 
-						_windowRect.height - (_titlebarRect.height + _toolbarRect.height + _resizeBtnSize)
+						_windowRect.height - (_headerBar.height + _toolbarRect.height + _resizeBtnSize)
 					);
 					GUILayout.BeginArea(rect);
 
@@ -148,7 +151,7 @@ namespace UImGui
 				newRectMax.y = Mathf.Max(newRectMax.y, _windowRect.min.y + _toolbarRect.max.y);
 
 				_windowRect.max = newRectMax;
-				_titlebarRect.xMax = _windowRect.width;
+				_headerBar.xMax = _windowRect.width;
 				_toolbarRect.xMax = _windowRect.width;
 			}
 		}
@@ -188,7 +191,7 @@ namespace UImGui
 		{
 			if (_windowFlags.HasFlag(WindowFlags.Titlebar))
 			{
-				GUILayout.BeginArea(_titlebarRect, ImGuiStyles.s_header);
+				GUILayout.BeginArea(_headerBar, ImGuiStyles.s_header);
 				{
 					GUILayout.BeginHorizontal();
 					{

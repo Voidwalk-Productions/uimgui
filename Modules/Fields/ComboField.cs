@@ -8,7 +8,7 @@ namespace UImGui
     {
         private static readonly HashSet<string> s_openPopups = new();
 
-        public static bool ComboField(string fieldId, ref int currentSelection, params string[] options)
+        public static bool ComboField(string fieldID, ref int currentSelection, params string[] options)
         {
             if (currentSelection < 0 || currentSelection >= options.Length)
             {
@@ -21,21 +21,21 @@ namespace UImGui
             {
 				if (GUILayout.Button(options[currentSelection], GUILayout.ExpandWidth(false)))
 				{
-                    if (s_openPopups.Contains(fieldId))
+                    if (s_openPopups.Contains(fieldID))
                     {
-                        s_openPopups.Remove(fieldId);
+                        s_openPopups.Remove(fieldID);
                     }
                     else
                     {
-                        s_openPopups.Add(fieldId);
+                        s_openPopups.Add(fieldID);
                     }
 				}
 				dropdownRect = GUILayoutUtility.GetLastRect();
 
-				GUILayout.Label(fieldId);
+				GUILayout.Label(fieldID);
 			}
 
-            if (s_openPopups.Contains(fieldId))
+            if (s_openPopups.Contains(fieldID))
             {
                 const float ButtonSize = ImGuiStyles.DefaultButtonHeight;
 
@@ -50,7 +50,7 @@ namespace UImGui
                     Rect optionRect = new(dropdownRect.x, dropdownRect.y + (i * ButtonSize), dropdownRect.width, ButtonSize);
                     if (GUI.Button(optionRect, option))
                     {
-                        s_openPopups.Remove(fieldId);
+                        s_openPopups.Remove(fieldID);
                         currentSelection = Array.IndexOf(options, option);
                         return true;
                     }

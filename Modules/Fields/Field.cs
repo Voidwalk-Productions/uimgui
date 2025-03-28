@@ -10,13 +10,13 @@ namespace UImGui
     {
         private static readonly Dictionary<string, string> s_tempFieldStates = new();
 
-        public static T Field<T>(string fieldId, T value)
+        public static T Field<T>(string fieldID, T value)
         {
             using (new GUILayout.HorizontalScope())
             {
-                object val = GetFieldDrawer<T>()?.Invoke(fieldId, value);
+                object val = GetFieldDrawer<T>()?.Invoke(fieldID, value);
 
-                GUILayout.Label(fieldId);
+                GUILayout.Label(fieldID);
 
                 return val != null ? (T)val : value;
             }
