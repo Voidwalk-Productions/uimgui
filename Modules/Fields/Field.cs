@@ -8,15 +8,16 @@ namespace UImGui
 
 	public static partial class UGui
     {
-        private static Dictionary<string, string> _tempFieldStates = new();
+        private static readonly Dictionary<string, string> s_tempFieldStates = new();
 
         public static T Field<T>(string fieldId, T value)
         {
             using (new GUILayout.HorizontalScope())
             {
+                object val = GetFieldDrawer<T>()?.Invoke(fieldId, value);
+
                 GUILayout.Label(fieldId);
 
-                object val = GetFieldDrawer<T>()?.Invoke(fieldId, value);
                 return val != null ? (T)val : value;
             }
         }
@@ -27,7 +28,7 @@ namespace UImGui
 
 			if (fieldType == typeof(bool))
 			{
-				return DrawField_Boolean;
+				return DrawField_Checkbox;
 			}
             else if (fieldType.IsPrimitive || fieldType == typeof(string))
             {
@@ -39,36 +40,36 @@ namespace UImGui
             }
         }
 
-        private static object DrawField_Boolean(string _, object value)
+        private static object DrawField_Checkbox(string _, object value)
         {
-            return GUILayout.Toggle(Convert.ToBoolean(value), "");
+            return GUILayout.Toggle(Convert.ToBoolean(value), "", GUILayout.ExpandWidth(false));
         }
 
         private static object DrawField_Generic<T>(string fieldID, object value)
         {
 			string parsedVal = value?.ToString() ?? "";
-            _tempFieldStates.TryAdd(fieldID, parsedVal);
+            s_tempFieldStates.TryAdd(fieldID, parsedVal);
 
             GUI.SetNextControlName(fieldID);
 
-			string fieldVal = GUILayout.TextField(_tempFieldStates[fieldID]);
+			string fieldVal = GUILayout.TextField(s_tempFieldStates[fieldID]);
 
 			if (GUI.GetNameOfFocusedControl() != fieldID && fieldVal != parsedVal)
 			{
 				try
                 {
                     object result = Convert.ChangeType(fieldVal, typeof(T));
-                    _tempFieldStates.Remove(fieldID);
+                    s_tempFieldStates.Remove(fieldID);
                     return result;
                 }
                 catch (Exception)
                 {
-					_tempFieldStates.Remove(fieldID);
+					s_tempFieldStates.Remove(fieldID);
 					return null;
                 }
 			}
 
-            _tempFieldStates[fieldID] = fieldVal;
+            s_tempFieldStates[fieldID] = fieldVal;
 
 			return value;
 		}

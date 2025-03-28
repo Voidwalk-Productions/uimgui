@@ -83,7 +83,7 @@ namespace UImGui
 				return;
 			}
 
-			GUILayout.BeginArea(_isFolded ? _windowFoldedRect : _windowRect, ImGuiStyles.WindowPanel);
+			GUILayout.BeginArea(_isFolded ? _windowFoldedRect : _windowRect, ImGuiStyles.s_windowPanel);
 			{
 				DrawTitlebar();
 
@@ -125,7 +125,7 @@ namespace UImGui
 
 			Rect resizeButtonRect = new (_windowRect.width - _resizeBtnSize, _windowRect.height - _resizeBtnSize, _resizeBtnSize, _resizeBtnSize);
 
-			GUI.Box(resizeButtonRect, "", ImGuiStyles.ResizeButton);
+			GUI.Box(resizeButtonRect, "", ImGuiStyles.s_resizeButton);
 
 			if (resizeButtonRect.Contains(e.mousePosition))
 			{
@@ -188,18 +188,18 @@ namespace UImGui
 		{
 			if (_windowFlags.HasFlag(WindowFlags.Titlebar))
 			{
-				GUILayout.BeginArea(_titlebarRect, ImGuiStyles.Header);
+				GUILayout.BeginArea(_titlebarRect, ImGuiStyles.s_header);
 				{
 					GUILayout.BeginHorizontal();
 					{
-						if (GUILayout.Button(_isFolded ? _styleAsset.rightArrowhead : _styleAsset.downArrowhead, ImGuiStyles.TitleButton, GUILayout.Width(24), GUILayout.Height(24)))
+						if (GUILayout.Button(_isFolded ? _styleAsset.rightArrowhead : _styleAsset.downArrowhead, ImGuiStyles.s_titleButton))
 						{
 							_isFolded = !_isFolded;
 						}
 
-						GUILayout.Label(_windowName, ImGuiStyles.Header);
+						GUILayout.Label(_windowName, ImGuiStyles.s_header);
 
-						if (GUILayout.Button(_styleAsset.close, ImGuiStyles.TitleButton, GUILayout.Width(_titleBtnSize), GUILayout.Height(_titleBtnSize)))
+						if (GUILayout.Button(_styleAsset.close, ImGuiStyles.s_titleButton, GUILayout.Width(_titleBtnSize), GUILayout.Height(_titleBtnSize)))
 						{
 							IsOpen = false;
 						}
@@ -215,11 +215,11 @@ namespace UImGui
 		{
 			if (_windowFlags.HasFlag(WindowFlags.Toolbar))
 			{
-				GUILayout.BeginArea(_toolbarRect, ImGuiStyles.MenuBar);
+				GUILayout.BeginArea(_toolbarRect, ImGuiStyles.s_menuBar);
 				GUILayout.BeginHorizontal();
 				foreach (var item in _menuItems)
 				{
-					if (GUILayout.Button(item.name, ImGuiStyles.Button, GUILayout.ExpandWidth(false)))
+					if (GUILayout.Button(item.name, ImGuiStyles.s_button, GUILayout.ExpandWidth(false)))
 					{
 						item.onPressed?.Invoke();
 					}
