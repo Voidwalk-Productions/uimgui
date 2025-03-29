@@ -24,6 +24,7 @@ namespace UImGui
 
 	public class Window : IWindow
 	{
+		public Window CurrentActiveWindow { get; private set; }
 		public bool IsOpen { get; set; }
 
 		private readonly string _windowName				= string.Empty;
@@ -40,12 +41,13 @@ namespace UImGui
 
 		private Vector2 _windowDragOffset				= Vector2.zero;
 		private Vector2 _windowResizeOffset				= Vector2.zero;
+		private Vector2 _scrollViewPosition				= Vector2.zero;
 
 		private bool _isDragging						= false;
 		private bool _isResizing						= false;
 		private bool _isFolded							= false;
 
-		private List<LayoutOnDrawCallback> _layoutOnDrawCallbacks = new();
+		private readonly List<LayoutOnDrawCallback> _layoutOnDrawCallbacks = new();
 
 		Window(string name, in Rect windowRect, WindowFlags flags, in ImGuiStyleAsset styleAsset)
 		{
@@ -75,10 +77,10 @@ namespace UImGui
 			return this;
 		}
 
-		private Vector2 scrollViewPosition = Vector2.zero;
-
 		public void OnGui()
 		{
+			CurrentActiveWindow = this;
+
 			GUI.skin = _styleAsset.skin;
 
 			if (!IsOpen)
@@ -103,7 +105,7 @@ namespace UImGui
 					);
 					GUILayout.BeginArea(rect);
 
-					scrollViewPosition = GUILayout.BeginScrollView(scrollViewPosition, GUILayout.Width(rect.width), GUILayout.Height(rect.height - _resizeBtnSize));
+					_scrollViewPosition = GUILayout.BeginScrollView(_scrollViewPosition, GUILayout.Width(rect.width), GUILayout.Height(rect.height - _resizeBtnSize));
 
 					foreach (var callback in _layoutOnDrawCallbacks)
 					{
